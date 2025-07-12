@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { dbConnect } from '../../../../../lib/mongoose';
+import dbConnect from '../../../../../lib/mongoose';
 import User from '../../../../../models/User';
 import Item from '../../../../../models/Item';
 import Swap from '../../../../../models/Swap';
@@ -13,16 +13,16 @@ export async function GET(request) {
   try {
     // Get token from Authorization header
     const authHeader = request.headers.get('Authorization');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
-    
+
     const token = authHeader.split(' ')[1];
-    
+
     // Verify token
     let decoded;
     try {
@@ -34,13 +34,13 @@ export async function GET(request) {
         { status: 401 }
       );
     }
-    
+
     // Connect to database
     await dbConnect();
-    
+
     // Get the current user ID from the token
     const currentUserId = decoded.id;
-    
+
     // Find the user in the database
     const user = await User.findById(currentUserId);
     if (!user) {
@@ -49,13 +49,13 @@ export async function GET(request) {
         { status: 404 }
       );
     }
-    
+
     // Get user's items
     const userItems = await Item.find({ uploaderId: currentUserId });
-    
+
     // Get items redeemed by the user
     const redeemedItems = await Item.find({ redeemedBy: currentUserId }).populate('uploaderId', 'name');
-    
+
     // Get user's swaps
     const userSwaps = await Swap.find({
       $or: [
@@ -63,11 +63,11 @@ export async function GET(request) {
         { ownerId: currentUserId }
       ]
     })
-    .populate('requestedItemId', 'title images')
-    .populate('offeredItemId', 'title images')
-    .populate('requesterId', 'name')
-    .populate('ownerId', 'name');
-    
+      .populate('requestedItemId', 'title images')
+      .populate('offeredItemId', 'title images')
+      .populate('requesterId', 'name')
+      .populate('ownerId', 'name');
+
     // Calculate statistics
     const itemStats = {
       total: userItems.length,
@@ -76,7 +76,7 @@ export async function GET(request) {
       swapped: userItems.filter(item => item.status === 'swapped').length,
       redeemed: userItems.filter(item => item.status === 'redeemed').length,
     };
-    
+
     const swapStats = {
       total: userSwaps.length,
       pending: userSwaps.filter(swap => swap.status === 'pending').length,
@@ -84,7 +84,7 @@ export async function GET(request) {
       completed: userSwaps.filter(swap => swap.status === 'completed').length,
       rejected: userSwaps.filter(swap => swap.status === 'rejected').length,
     };
-    
+
     // Format the swaps data for the response
     const formattedActiveSwaps = userSwaps
       .filter(swap => swap.status === 'pending' || swap.status === 'accepted')
@@ -109,7 +109,7 @@ export async function GET(request) {
           ? { id: swap.ownerId._id, name: swap.ownerId.name }
           : { id: swap.requesterId._id, name: swap.requesterId.name },
       }));
-    
+
     const formattedCompletedSwaps = userSwaps
       .filter(swap => swap.status === 'completed' || swap.status === 'rejected')
       .map(swap => ({
@@ -134,7 +134,7 @@ export async function GET(request) {
           ? { id: swap.ownerId._id, name: swap.ownerId.name }
           : { id: swap.requesterId._id, name: swap.requesterId.name },
       }));
-    
+
     // Format the redeemed items data for the response
     const formattedRedeemedItems = redeemedItems.map(item => ({
       id: item._id,
@@ -145,12 +145,12 @@ export async function GET(request) {
       condition: item.condition,
       pointsValue: item.pointsValue,
       redemptionDate: item.redemptionDate,
-      originalUploader: { 
+      originalUploader: {
         id: item.uploaderId._id,
         name: item.uploaderId.name
       },
     }));
-    
+
     // Return dashboard data
     return NextResponse.json(
       {
@@ -188,7 +188,7 @@ export async function GET(request) {
       },
       { status: 200 }
     );
-    
+
   } catch (error) {
     console.error('Get dashboard error:', error);
     return NextResponse.json(

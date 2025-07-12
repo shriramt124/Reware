@@ -74,27 +74,27 @@ export default function DashboardPage() {
   
   // Use dashboard data or fallback to defaults
   const userData = {
-    name: dashboardData.user.name || user?.name || 'User',
+    name: dashboardData?.user?.name || user?.name || 'User',
     email: user?.email || 'user@example.com',
-    points: dashboardData.user.points || user?.points || 0,
-    joinedDate: new Date(dashboardData.user.joinedDate || user?.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) || 'Recently joined',
-    avatar: dashboardData.user.avatar || user?.avatar || '/placeholder-image.svg',
+    points: dashboardData?.user?.points || user?.points || 0,
+    joinedDate: new Date(dashboardData?.user?.joinedDate || user?.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) || 'Recently joined',
+    avatar: dashboardData?.user?.avatar || user?.avatar || '/placeholder-image.svg',
   };
   
   // User's listings from API
-  const userListings = dashboardData.items.listings || [];
+  const userListings = dashboardData?.items?.listings || [];
   
   // User's completed swaps and redeemed items
   const userPurchases = [
-    ...dashboardData.swaps.completed.map(swap => ({
+    ...(dashboardData?.swaps?.completed || []).map(swap => ({
       id: swap.id,
-      title: swap.isRequester ? swap.requestedItem.title : swap.offeredItems[0].title,
+      title: swap.isRequester ? swap.requestedItem?.title : swap.offeredItems?.[0]?.title,
       description: '',
-      imageSrc: swap.isRequester ? swap.requestedItem.image : swap.offeredItems[0].image || '/placeholder-image.svg',
+      imageSrc: swap.isRequester ? swap.requestedItem?.image : swap.offeredItems?.[0]?.image || '/placeholder-image.svg',
       date: new Date(swap.completedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       type: 'swap',
     })),
-    ...dashboardData.redeemed.map(item => ({
+    ...(dashboardData?.redeemed || []).map(item => ({
       id: item.id,
       title: item.title,
       description: '',
@@ -154,25 +154,25 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
                   <div className="relative h-36 w-36 rounded-full overflow-hidden border-4 border-white shadow-md">
                     <Image 
-                      src={userData.avatar} 
-                      alt={userData.name}
+                      src={userData?.avatar || '/placeholder-image.svg'} 
+                      alt={userData?.name || 'User profile'}
                       fill
                       className="object-cover"
                     />
                   </div>
                   
                   <div className="flex-1 text-center sm:text-left">
-                    <h2 className="text-3xl font-bold text-gray-900">{userData.name}</h2>
-                    <p className="text-gray-600">{userData.email}</p>
+                    <h2 className="text-3xl font-bold text-gray-900">{userData?.name || 'User'}</h2>
+                    <p className="text-gray-600">{userData?.email || 'user@example.com'}</p>
                     <div className="flex items-center mt-2 justify-center sm:justify-start">
                       <FiCalendar className="text-gray-500 mr-2" />
-                      <p className="text-sm text-gray-500">Member since {userData.joinedDate}</p>
+                      <p className="text-sm text-gray-500">Member since {userData?.joinedDate || 'Recently joined'}</p>
                     </div>
                     
                     <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center">
                       <div className="bg-white shadow-sm px-6 py-3 rounded-full flex items-center">
                         <FiAward className="text-green-600 mr-2" />
-                        <span className="text-green-700 font-medium">{userData.points} Points Available</span>
+                        <span className="text-green-700 font-medium">{userData?.points || 0} Points Available</span>
                       </div>
                       
                       <Button href="/dashboard/edit-profile" variant="outline" size="sm" className="flex items-center">
@@ -190,17 +190,17 @@ export default function DashboardPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl text-center shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="text-4xl font-bold text-green-600 mb-2">{dashboardData.items.stats.total || 0}</div>
+                    <div className="text-4xl font-bold text-green-600 mb-2">{dashboardData?.items?.stats?.total || 0}</div>
                     <p className="text-gray-700 font-medium">Items Listed</p>
                   </div>
                   
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl text-center shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="text-4xl font-bold text-blue-600 mb-2">{dashboardData.swaps.stats.completed || 0}</div>
+                    <div className="text-4xl font-bold text-blue-600 mb-2">{dashboardData?.swaps?.stats?.completed || 0}</div>
                     <p className="text-gray-700 font-medium">Successful Swaps</p>
                   </div>
                   
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl text-center shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="text-4xl font-bold text-purple-600 mb-2">{dashboardData.redeemed.length || 0}</div>
+                    <div className="text-4xl font-bold text-purple-600 mb-2">{dashboardData?.redeemed?.length || 0}</div>
                     <p className="text-gray-700 font-medium">Point Redemptions</p>
                   </div>
                 </div>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">CO₂ Emissions Saved</p>
-                          <p className="text-xl font-bold text-gray-900">{(dashboardData.items.stats.swapped + dashboardData.redeemed.length) * 3} kg</p>
+                          <p className="text-xl font-bold text-gray-900">{((dashboardData?.items?.stats?.swapped || 0) + (dashboardData?.redeemed?.length || 0)) * 3} kg</p>
                         </div>
                       </div>
                     </div>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Water Saved</p>
-                          <p className="text-xl font-bold text-gray-900">{(dashboardData.items.stats.swapped + dashboardData.redeemed.length) * 150} L</p>
+                          <p className="text-xl font-bold text-gray-900">{((dashboardData?.items?.stats?.swapped || 0) + (dashboardData?.redeemed?.length || 0)) * 150} L</p>
                         </div>
                       </div>
                     </div>

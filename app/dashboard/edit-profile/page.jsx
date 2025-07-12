@@ -35,15 +35,15 @@ export default function EditProfilePage() {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        interests: user.preferences?.categories || [],
+        name: user?.name || '',
+        email: user?.email || '',
+        bio: user?.bio || '',
+        location: user?.location || '',
+        interests: user?.preferences?.categories || [],
         newInterest: '',
-        notifications: user.preferences?.notifications?.email || false,
-        publicProfile: user.preferences?.notifications?.publicProfile || false,
-        swapAlerts: user.preferences?.notifications?.swapRequests || false
+        notifications: user?.preferences?.notifications?.email || false,
+        publicProfile: user?.preferences?.notifications?.publicProfile || false,
+        swapAlerts: user?.preferences?.notifications?.swapRequests || false
       });
     }
   }, [user]);
@@ -137,8 +137,8 @@ export default function EditProfilePage() {
               <div className="relative group">
                 <div className="relative h-36 w-36 rounded-full overflow-hidden border-4 border-white shadow-md">
                   <Image
-                    src={user?.avatar}
-                    alt={user.name}
+                    src={user?.avatar || '/images/default-avatar.png'}
+                    alt={user?.name || 'User profile'}
                     fill
                     className="object-cover"
                   />

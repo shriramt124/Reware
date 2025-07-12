@@ -1,82 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Button from '../../components/ui/Button';
 
 export default function BrowsePage() {
-  // Mock items data
-  const items = [
-    {
-      id: 1,
-      title: 'Denim Jacket',
-      description: 'Lightly worn denim jacket, perfect for fall weather',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Outerwear',
-      size: 'M',
-      condition: 'Good',
-      pointsValue: 50,
-      uploader: 'Alex Johnson',
-    },
-    {
-      id: 2,
-      title: 'Summer Dress',
-      description: 'Floral pattern summer dress, worn only twice',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Dresses',
-      size: 'S',
-      condition: 'Like New',
-      pointsValue: 75,
-      uploader: 'Maria Garcia',
-    },
-    {
-      id: 3,
-      title: 'Running Shoes',
-      description: 'Lightly used running shoes, size 9',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Shoes',
-      size: '9',
-      condition: 'Good',
-      pointsValue: 60,
-      uploader: 'David Kim',
-    },
-    {
-      id: 4,
-      title: 'Winter Sweater',
-      description: 'Warm wool sweater in excellent condition',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Tops',
-      size: 'L',
-      condition: 'Excellent',
-      pointsValue: 65,
-      uploader: 'Sarah Williams',
-    },
-    {
-      id: 5,
-      title: 'Leather Belt',
-      description: 'Classic brown leather belt, barely used',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Accessories',
-      size: '32',
-      condition: 'Like New',
-      pointsValue: 30,
-      uploader: 'James Smith',
-    },
-    {
-      id: 6,
-      title: 'Casual T-Shirt',
-      description: 'Cotton t-shirt with graphic print',
-      imageSrc: '/placeholder-image.svg',
-      category: 'Tops',
-      size: 'XL',
-      condition: 'Good',
-      pointsValue: 25,
-      uploader: 'Emily Chen',
-    },
-  ];
+  // State for items data
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 0
+  });
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,31 +31,55 @@ export default function BrowsePage() {
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '6', '7', '8', '9', '10', '11', '12'];
   const conditions = ['Like New', 'Excellent', 'Good', 'Fair'];
   
-  // Filter items based on selected filters
-  const filteredItems = items.filter(item => {
-    // Search term filter
-    if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !item.description.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
+  // Fetch items from API
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (categoryFilter) params.append('category', categoryFilter);
+      if (sizeFilter) params.append('size', sizeFilter);
+      if (conditionFilter) params.append('condition', conditionFilter);
+      params.append('page', pagination.page);
+      params.append('limit', pagination.limit);
+      
+      // Make API call
+      const response = await fetch(`/api/v1/items?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch items');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setItems(data.data.items);
+        setPagination(data.data.pagination);
+      } else {
+        throw new Error(data.message || 'Failed to fetch items');
+      }
+    } catch (err) {
+      console.error('Error fetching items:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    
-    // Category filter
-    if (categoryFilter && item.category !== categoryFilter) {
-      return false;
-    }
-    
-    // Size filter
-    if (sizeFilter && item.size !== sizeFilter) {
-      return false;
-    }
-    
-    // Condition filter
-    if (conditionFilter && item.condition !== conditionFilter) {
-      return false;
-    }
-    
-    return true;
-  });
+  };
+  
+  // Fetch items when filters change
+  useEffect(() => {
+    fetchItems();
+  }, [searchTerm, categoryFilter, sizeFilter, conditionFilter, pagination.page, pagination.limit]);
+  
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [searchTerm, categoryFilter, sizeFilter, conditionFilter]);
+  
+  // No need to filter items as the API does that for us
+  const filteredItems = items;
   
   // Reset all filters
   const resetFilters = () => {
@@ -261,16 +227,40 @@ export default function BrowsePage() {
             </div>
           </div>
           
+          {/* Loading state */}
+          {loading && (
+            <div className="bg-white p-8 rounded-lg shadow-md text-center">
+              <div className="flex justify-center mb-4">
+                <RefreshCw className="h-12 w-12 text-green-500 animate-spin" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">Loading items...</h3>
+            </div>
+          )}
+          
+          {/* Error state */}
+           {error && !loading && (
+             <div className="bg-white p-8 rounded-lg shadow-md text-center border border-red-200">
+               <div className="flex justify-center mb-4">
+                 <AlertCircle className="h-12 w-12 text-red-500" />
+               </div>
+               <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading items</h3>
+               <p className="text-red-600 mb-4">{error}</p>
+               <Button onClick={fetchItems} variant="outline">
+                 Try Again
+               </Button>
+             </div>
+           )}
+          
           {/* Items Grid */}
-          {filteredItems.length > 0 ? (
+          {!loading && !error && filteredItems.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredItems.map((item) => (
                 <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   <Link href={`/items/${item.id}`}>
                     <div className="relative h-64 w-full">
                       <Image 
-                        src={item.imageSrc} 
-                        alt={item.title}
+                        src={item.images && item.images.length > 0 ? item.images[0] : '/placeholder-image.svg'} 
+                        alt={item.title || 'Item image'}
                         fill
                         className="object-cover"
                       />
@@ -297,7 +287,7 @@ export default function BrowsePage() {
                     
                     <div className="mt-4 flex justify-between items-center">
                       <div className="text-sm text-gray-500">
-                        By {item.uploader}
+                        By {item.uploader?.name || 'Unknown'}
                       </div>
                       <div className="text-sm font-medium text-green-600">
                         {item.pointsValue} points
@@ -317,7 +307,7 @@ export default function BrowsePage() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : !loading && !error ? (
             <div className="bg-white p-8 rounded-lg shadow-md text-center">
               <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
               <p className="text-gray-600 mb-4">Try adjusting your filters or search terms.</p>
@@ -325,9 +315,38 @@ export default function BrowsePage() {
                 Reset Filters
               </Button>
             </div>
-          )}
-        </div>
-      </main>
+          ) : null}
+           
+           {/* Pagination */}
+           {!loading && !error && filteredItems.length > 0 && pagination.pages > 1 && (
+             <div className="mt-8 flex justify-center">
+               <div className="flex space-x-2">
+                 <Button 
+                   variant="outline" 
+                   onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))} 
+                   disabled={pagination.page <= 1}
+                 >
+                   <ChevronLeft className="h-4 w-4 mr-2" />
+                   Previous
+                 </Button>
+                 
+                 <div className="flex items-center px-4 text-sm text-gray-600">
+                   Page {pagination.page} of {pagination.pages}
+                 </div>
+                 
+                 <Button 
+                   variant="outline" 
+                   onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))} 
+                   disabled={pagination.page >= pagination.pages}
+                 >
+                   Next
+                   <ChevronRight className="h-4 w-4 ml-2" />
+                 </Button>
+               </div>
+             </div>
+           )}
+          </div>
+        </main>
       
       <Footer />
     </>

@@ -127,17 +127,61 @@ export default function AddItemPage() {
   };
   
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // In a real app, this would upload the images and create the item
-      console.log('Form data:', formData);
-      console.log('Images:', images);
-      
-      // Mock successful submission
-      alert('Item added successfully!');
-      router.push('/dashboard');
+      try {
+        // Convert images to base64 strings
+        const imagePromises = images.map(image => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(image);
+          });
+        });
+        
+        const base64Images = await Promise.all(imagePromises);
+        
+        // Prepare tags array from comma-separated string
+        const tagsArray = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+        
+        // Prepare the request payload
+        const payload = {
+          ...formData,
+          tags: tagsArray,
+          images: base64Images
+        };
+        
+        // Make API call to create the item
+        const response = await fetch('/api/v1/items', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Item added successfully and pending approval!');
+          router.push('/dashboard');
+        } else {
+          // Handle API error
+          setErrors({
+            ...errors,
+            submit: result.message || 'Failed to create item. Please try again.'
+          });
+        }
+      } catch (error) {
+        console.error('Error creating item:', error);
+        setErrors({
+          ...errors,
+          submit: 'An unexpected error occurred. Please try again.'
+        });
+      }
     }
   };
   
