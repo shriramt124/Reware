@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import dbConnect from '../../../../../lib/mongoose';
-import Item from '../../../../../models/Item';
-import User from '../../../../../models/User';
-import PointTransaction from '../../../../../models/PointTransaction';
-import { authenticate, unauthorizedResponse, isAdmin, forbiddenResponse } from '../../../../../lib/auth';
+import dbConnect from '../../../../../../lib/mongoose';
+import Item from '../../../../../../models/Item';
+import User from '../../../../../../models/User';
+import PointTransaction from '../../../../../../models/PointTransaction';
+import { authenticate, unauthorizedResponse, isAdmin, forbiddenResponse } from '../../../../../../lib/auth';
 
 // Approve items (admin only)
 export async function POST(request) {

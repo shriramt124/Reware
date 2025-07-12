@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { dbConnect } from '@/lib/mongodb';
+import dbConnect from '@/lib/mongoose';
 import Item from '@/models/Item';
 import { authenticate } from '@/lib/auth';
 
@@ -88,7 +88,7 @@ export async function POST(request) {
         rejectedItems.push({
           id: itemId,
           title: item.title,
-          uploaderId: item.uploader.toString(),
+          uploaderId: item.uploaderId.toString(),
           reason: data.reason
         });
       } catch (error) {
